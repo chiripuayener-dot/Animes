@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Episodios</title>
+
+<style>
+body{background:#0b0b0f;color:white;font-family:Arial;}
+.ep{padding:15px;border-bottom:1px solid #333;cursor:pointer;}
+.ep:hover{background:#1a1a1a;}
+</style>
+</head>
+
+<body>
+
+<h2 id="titulo"></h2>
+<div id="lista"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+const client = supabase.createClient(
+"https://rundbtjcowhtxdqqpdlj.supabase.co",
+"sb_publishable_dnBa-RZXNC0vHZ0UqQoUtA_bS9ILmyO"
+);
+
+let nombre=localStorage.getItem("anime");
+let temp=localStorage.getItem("temp");
+
+titulo.innerText=nombre;
+
+async function cargar(){
+let {data}=await client.from("episodios")
+.select("*")
+.eq("nombre",nombre)
+.eq("temporada",temp)
+.order("episodio");
+
+data.forEach(e=>{
+lista.innerHTML+=`
+<div class="ep" onclick="ver('${e.video}','${e.descarga}','${e.episodio}')">
+Episodio ${e.episodio}
+</div>`;
+});
+}
+
+function ver(v,d,e){
+localStorage.setItem("video",v);
+localStorage.setItem("descarga",d);
+localStorage.setItem("ep",e);
+location.href="ver.html";
+}
+
+cargar();
+</script>
+
+</body>
+</html>

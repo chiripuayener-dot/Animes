@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ver Anime</title>
+
+<style>
+body{margin:0;background:#000;color:white;font-family:Arial;}
+
+.player-box{position:relative;}
+
+video{
+width:100%;
+height:60vh;
+background:black;
+}
+
+.controls{
+display:flex;
+justify-content:center;
+gap:10px;
+padding:10px;
+}
+
+button{
+background:#111;
+border:none;
+color:white;
+padding:10px;
+border-radius:10px;
+}
+
+.section{padding:10px;}
+
+input,textarea{
+width:100%;
+padding:10px;
+margin:5px 0;
+border:none;
+border-radius:10px;
+background:#111;
+color:white;
+}
+
+.comment{
+background:#111;
+padding:10px;
+margin:5px 0;
+border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h3 id="titulo"></h3>
+
+<video id="player" controls></video>
+
+<!-- BOTONES -->
+<div class="controls">
+<button onclick="download()">⬇ Descargar</button>
+<button onclick="history.back()">⬅ Atrás</button>
+<button onclick="fullscreen()">🔄 Girar</button>
+</div>
+
+<!-- 💬 SOLO COMENTARIOS -->
+<div class="section">
+<textarea id="comment"></textarea>
+<button onclick="sendComment()">Comentar</button>
+
+<div id="comments"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+const client = supabase.createClient(
+"https://rundbtjcowhtxdqqpdlj.supabase.co",
+"sb_publishable_dnBa-RZXNC0vHZ0UqQoUtA_bS9ILmyO"
+);
+
+let anime = localStorage.getItem("anime");
+let ep = localStorage.getItem("ep");
+let video = localStorage.getItem("video");
+
+titulo.innerText = anime + " - Ep " + ep;
+
+---
+
+# 🎬 STREAMTAPE FIX
+function fixStream(url){
+if(url.includes("streamtape")){
+return url.replace("/v/","/e/");
+}
+return url;
+}
+
+player.src = fixStream(video);
+
+---
+
+# ⬇ DESCARGA
+function download(){
+window.open(localStorage.getItem("descarga"));
+}
+
+function fullscreen(){
+player.requestFullscreen();
+}
+
+---
+
+# 💬 COMENTARIOS
+async function sendComment(){
+
+await client.from("comments").insert([{
+anime,
+episode:ep,
+comment:comment.value
+}]);
+
+loadComments();
+}
+
+async function loadComments(){
+
+let {data}=await client
+.from("comments")
+.select("*")
+.eq("anime",anime)
+.eq("episode",ep)
+.order("id",{ascending:false});
+
+comments.innerHTML="";
+
+data.forEach(c=>{
+comments.innerHTML+=`
+<div class="comment">
+<p>${c.comment}</p>
+</div>`;
+});
+}
+
+loadComments();
+
+</script>
+
+</body>
+</html>

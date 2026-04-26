@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin</title>
+
+<style>
+body{
+background:#0b0b0f;
+color:white;
+display:flex;
+justify-content:center;
+font-family:Arial;
+}
+
+.box{
+background:#111;
+padding:20px;
+border-radius:20px;
+width:350px;
+margin-top:40px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin:6px 0;
+border:none;
+border-radius:10px;
+background:#1a1a1a;
+color:white;
+}
+
+button{
+width:100%;
+padding:12px;
+background:#e50914;
+border:none;
+border-radius:10px;
+color:white;
+cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<script>
+let pass=prompt("Contraseña");
+if(pass!=="y3n3r2013"){
+location.href="index.html";
+}
+</script>
+
+<div class="box">
+<h2>Subir Anime</h2>
+
+<input id="nombre" placeholder="Nombre del anime">
+<input id="temporada" placeholder="Temporada">
+<input id="episodio" placeholder="Episodio">
+
+<!-- 🔥 IMAGEN RESTAURADA -->
+<input type="file" id="img">
+
+<input id="categoria" placeholder="Categoría">
+<input id="video" placeholder="Link del video">
+<input id="descarga" placeholder="Link descarga">
+
+<button onclick="subir()">Subir</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+const client = supabase.createClient(
+"https://rundbtjcowhtxdqqpdlj.supabase.co",
+"sb_publishable_dnBa-RZXNC0vHZ0UqQoUtA_bS9ILmyO"
+);
+
+function base64(file){
+return new Promise(r=>{
+let reader=new FileReader();
+reader.onload=()=>r(reader.result);
+reader.readAsDataURL(file);
+});
+}
+
+async function subir(){
+
+let file = img.files[0];
+let img64 = await base64(file);
+
+await client.from("episodios").insert([{
+nombre:nombre.value,
+temporada:temporada.value,
+episodio:Number(episodio.value),
+imagen:img64,
+video:video.value,
+descarga:descarga.value,
+categoria:categoria.value
+}]);
+
+alert("Subido 🔥");
+}
+</script>
+
+</body>
+</html>

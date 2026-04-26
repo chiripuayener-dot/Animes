@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Otaku Y3N3R</title>
+
+<style>
+body{
+margin:0;
+background:#0b0b0f;
+color:white;
+font-family:Arial;
+}
+
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px;
+background:#111;
+}
+
+header h1{color:#e50914;}
+
+input{
+padding:10px;
+border-radius:10px;
+border:none;
+}
+
+.cats{
+display:flex;
+gap:10px;
+padding:10px;
+overflow:auto;
+}
+
+.cat{
+background:#1a1a1a;
+padding:10px;
+border-radius:20px;
+cursor:pointer;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+gap:15px;
+padding:10px;
+}
+
+.card{
+position:relative;
+cursor:pointer;
+}
+
+.card img{
+width:100%;
+height:230px;
+border-radius:15px;
+object-fit:cover;
+}
+
+.badge{
+position:absolute;
+top:8px;
+left:8px;
+background:rgba(0,0,0,0.7);
+padding:5px 8px;
+border-radius:8px;
+font-size:12px;
+}
+
+/* VOTO */
+#voteBox{
+display:none;
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+background:#111;
+padding:15px;
+border-top:2px solid #e50914;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+border:none;
+border-radius:10px;
+background:#222;
+color:white;
+}
+
+button{
+width:100%;
+padding:10px;
+background:#e50914;
+border:none;
+color:white;
+border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🔥 Otaku Y3N3R</h1>
+<input id="buscador" placeholder="Buscar anime...">
+</header>
+
+<div class="cats" id="cats"></div>
+<div class="grid" id="box"></div>
+
+<!-- ⭐ VOTO -->
+<div id="voteBox">
+<h3>⭐ Valorar Anime</h3>
+
+<input id="email" placeholder="Correo">
+<input id="name" placeholder="Nombre">
+
+<select id="rating">
+<option value="10">10</option>
+<option value="9">9</option>
+<option value="8">8</option>
+<option value="7">7</option>
+<option value="6">6</option>
+<option value="5">5</option>
+<option value="4">4</option>
+<option value="3">3</option>
+<option value="2">2</option>
+<option value="1">1</option>
+</select>
+
+<button onclick="sendVote()">Votar</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+const client = supabase.createClient(
+"https://rundbtjcowhtxdqqpdlj.supabase.co",
+"sb_publishable_dnBa-RZXNC0vHZ0UqQoUtA_bS9ILmyO"
+);
+
+let DATA=[];
+let selectedAnime="";
+
+/* ⭐ rating promedio */
+async function getRating(name){
+let {data}=await client
+.from("ratings")
+.select("*")
+.eq("anime",name);
+
+if(!data.length) return "0.0";
+
+let total=0;
+data.forEach(r=>total+=r.rating);
+
+return (total/data.length).toFixed(1);
+}
+
+/* cargar */
+async function cargar(){
+let {data}=await client.from("episodios").select("*");
+DATA=data;
+mostrar(DATA);
+catsLoad();
+}
+
+/* mostrar */
+async function mostrar(data){
+box.innerHTML="";
+let vistos={};
+
+for(let e of data){
+
+let key=e.nombre+e.temporada;
+
+if(!vistos[key]){
+vistos[key]=true;
+
+let avg=await getRating(e.nombre);
+
+box.innerHTML+=`
+<div class="card" data-anime="${e.nombre}">
+
+<div class="badge">⭐ ${avg}/10</div>
+
+<img src="${e.imagen}">
+</div>`;
+}
+}
+}
+
+/* categorías */
+function catsLoad(){
+let c=[...new Set(DATA.map(x=>x.categoria))];
+
+cats.innerHTML=`<div class="cat" onclick="mostrar(DATA)">Todas</div>`;
+
+c.forEach(x=>{
+cats.innerHTML+=`<div class="cat" onclick="filtrar('${x}')">${x}</div>`;
+});
+}
+
+function filtrar(c){
+mostrar(DATA.filter(x=>x.categoria==c));
+}
+
+/* buscador */
+buscador.oninput=()=>{
+let t=buscador.value.toLowerCase();
+mostrar(DATA.filter(x=>x.nombre.toLowerCase().includes(t)));
+};
+
+/* abrir + HOLD */
+let timer;
+
+document.addEventListener("mousedown",start);
+document.addEventListener("touchstart",start);
+document.addEventListener("mouseup",cancel);
+document.addEventListener("touchend",cancel);
+
+function start(e){
+let card=e.target.closest(".card");
+if(!card) return;
+
+selectedAnime=card.dataset.anime;
+
+timer=setTimeout(()=>{
+voteBox.style.display="block";
+},600);
+}
+
+function cancel(){
+clearTimeout(timer);
+}
+
+/* ⭐ VOTAR CON VALIDACIÓN */
+async function sendVote(){
+
+if(!email.value || !name.value){
+alert("⚠️ Debes poner correo y nombre");
+return;
+}
+
+let check=await client
+.from("ratings")
+.select("*")
+.eq("email",email.value)
+.eq("anime",selectedAnime);
+
+if(check.data.length>0){
+alert("Ya votaste 😎");
+return;
+}
+
+await client.from("ratings").insert([{
+anime:selectedAnime,
+email:email.value,
+rating:Number(rating.value)
+}]);
+
+alert("Voto guardado 🔥");
+voteBox.style.display="none";
+
+cargar();
+}
+
+cargar();
+</script>
+
+</body>
+</html>
